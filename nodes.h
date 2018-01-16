@@ -1,5 +1,6 @@
 #define __attribute__(x)
-typedef int __int128;
+/* pycparser now knows about __int128 */
+/* typedef int __int128; */
 
 #include "pg_config.h"
 #include "postgres.h"

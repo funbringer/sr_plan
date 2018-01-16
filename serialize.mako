@@ -21,7 +21,7 @@ static bool skip_location = false;
 	numeric_types += enum_likes_types
 
 	node_types = node_tags_refs + node_tags_structs
-	
+
 	def camel_split(s):
 		return (''.join(map(lambda x: x if x.islower() else " "+x, s))).split()
 %>
@@ -123,7 +123,7 @@ static bool skip_location = false;
 	%endif
 	${ser_key(var_name)}
 	pushJsonbValue(&state, WJB_KEY, &key);
-	
+
 	if (node->${var_name} == NULL)
 	{
 		val.type = jbvNull;
@@ -221,7 +221,6 @@ JsonbValue *datum_ser(JsonbParseState *state, Datum value, int typlen, bool typb
 			return pushJsonbValue(&state, WJB_END_ARRAY, NULL);
 		}
 	}
-	
 }
 
 %for struct_name, struct in node_tree.items():
@@ -308,7 +307,7 @@ JsonbValue *datum_ser(JsonbParseState *state, Datum value, int typlen, bool typb
 				%else:
 					/* CAN'T SER ARRAY ${var_name} */
 				%endif
-				
+
 			%elif type_node["pointer"] and type_node["name"] == "Bitmapset":
 				{
 					JsonbValue val;

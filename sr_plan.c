@@ -34,9 +34,25 @@ struct QueryParams
 List *query_params;
 const char *query_text;
 
+static post_parse_analyze_hook_type post_parse_analyze_hook_next = NULL;
+static planner_hook_type planner_hook_next = NULL;
+
+static PlannedStmt *call_next_planner(Query *parse,
+									  int cursorOptions,
+									  ParamListInfo boundParams)
+{
+	if (planner_hook_next)
+		return planner_hook_next(parse, cursorOptions, boundParams);
+
+	return standard_planner(parse, cursorOptions, boundParams);
+}
+
 void sr_analyze(ParseState *pstate, Query *query)
 {
 	query_text = pstate->p_sourcetext;
+
+	if (post_parse_analyze_hook_next)
+		post_parse_analyze_hook(pstate, query);
 }
 
 PlannedStmt *sr_planner(Query *parse,
@@ -72,11 +88,10 @@ PlannedStmt *sr_planner(Query *parse,
 		Oid args[1] = {ANYELEMENTOID};
 		sr_plan_fake_func = LookupFuncName(list_make1(makeString("_p")), 1, args, true);
 	}
-	
-	
+
 	out_jsonb = node_tree_to_jsonb(parse, sr_plan_fake_func, true);
 	query_hash = DatumGetInt32(DirectFunctionCall1(jsonb_hash, PointerGetDatum(out_jsonb)));
-	
+
 	query_params = NULL;
 	/* Make list with all _p functions and his position */
 	sr_query_walker((Query *)parse, NULL);
@@ -85,8 +100,8 @@ PlannedStmt *sr_planner(Query *parse,
 	/* First check existance of "sr_plans" table */
 	sr_plans_oid = RangeVarGetRelid(sr_plans_table_rv, heap_lock, true);
 	if (!OidIsValid(sr_plans_oid))
-		/* Just call standard_planner() if table doesn't exist. */
-		return standard_planner(parse, cursorOptions, boundParams);
+		/* Just call next planner if table doesn't exist. */
+		return call_next_planner(parse, cursorOptions, boundParams);
 
 	/* Table "sr_plans" exists */
 	sr_plans_heap = heap_open(sr_plans_oid, NoLock);
@@ -100,7 +115,7 @@ PlannedStmt *sr_planner(Query *parse,
 	{
 		heap_close(sr_plans_heap, heap_lock);
 		elog(WARNING, "Not found sr_plans_query_hash_idx index");
-		return standard_planner(parse, cursorOptions, boundParams);
+		return call_next_planner(parse, cursorOptions, boundParams);
 	}
 
 	query_index_rel = index_open(query_index_rel_oid, heap_lock);
@@ -139,7 +154,7 @@ PlannedStmt *sr_planner(Query *parse,
 		}
 	}
 	index_endscan(query_index_scan);
-	
+
 	if (find_ok)
 	{
 		elog(WARNING, "Ok we find saved plan.");
@@ -154,8 +169,8 @@ PlannedStmt *sr_planner(Query *parse,
 	{
 		bool not_have_duplicate = true;
 		Datum plan_hash;
-		
-		pl_stmt = standard_planner(parse, cursorOptions, boundParams);
+
+		pl_stmt = call_next_planner(parse, cursorOptions, boundParams);
 		out_jsonb2 = node_tree_to_jsonb(pl_stmt, 0, false);
 		plan_hash = DirectFunctionCall1(jsonb_hash, PointerGetDatum(out_jsonb2));
 
@@ -206,9 +221,9 @@ PlannedStmt *sr_planner(Query *parse,
 	}
 	else
 	{
-		pl_stmt = standard_planner(parse, cursorOptions, boundParams);
+		pl_stmt = call_next_planner(parse, cursorOptions, boundParams);
 	}
-	
+
 	index_close(query_index_rel, heap_lock);
 	heap_close(sr_plans_heap, heap_lock);
 	return pl_stmt;
@@ -223,7 +238,7 @@ bool sr_query_walker(Query *node, void *context)
 		{
 			return sr_query_expr_walker((Node *)node, node);
 		}
-		
+
 		// for any node type not specially processed, do:
 		if (IsA(node, Query))
 		{
@@ -273,7 +288,6 @@ void *replace_fake(void *node)
 }
 
 void _PG_init(void) {
-        /* elog(WARNING, "SR_Plan init"); */
 	DefineCustomBoolVariable("sr_plan.write_mode",
 							 "Save all plans for all query.",
 							 NULL,
@@ -285,12 +299,17 @@ void _PG_init(void) {
 							 NULL,
 							 NULL);
 
+	if (planner_hook)
+		planner_hook_next = planner_hook;
+
+	if (post_parse_analyze_hook)
+		post_parse_analyze_hook_next = post_parse_analyze_hook;
+
 	planner_hook = &sr_planner;
 	post_parse_analyze_hook = &sr_analyze;
 }
 
 void _PG_fini(void) {
-        /* elog(WARNING, "SR_Plan finit"); */
 	planner_hook = NULL;
 	post_parse_analyze_hook = NULL;
 }
@@ -374,7 +393,7 @@ sr_plan_invalid_table(PG_FUNCTION_ARGS)
 
 	sr_plans_table_rv = makeRangeVar("public", "sr_plans", -1);
 	sr_plans_heap = heap_openrv(sr_plans_table_rv, RowExclusiveLock);
-	
+
 	relation_key.type = jbvString;
 	relation_key.val.string.len = strlen("relationOids");
 	relation_key.val.string.val = "relationOids";
@@ -394,7 +413,7 @@ sr_plan_invalid_table(PG_FUNCTION_ARGS)
 		Oid args[1];
 		dropped_objects_func = LookupFuncName(list_make1(makeString("pg_event_trigger_dropped_objects")), 0, args, true);
 	}
-	
+
 	/* Look up the function */
 	fmgr_info(dropped_objects_func, &flinfo);
 
@@ -452,7 +471,6 @@ sr_plan_invalid_table(PG_FUNCTION_ARGS)
 								find_plan = true;
 								break;
 							}
-							
 						}
 					}
 				}
@@ -476,7 +494,7 @@ sr_plan_invalid_table(PG_FUNCTION_ARGS)
 									find_plan = true;
 									break;
 								}
-							}	
+							}
 						}
 					}
 				}

@@ -16,7 +16,6 @@ pip install -r ./requirements.txt
 
 Then you need to generate C code and compiled it:
 ```bash
-make USE_PGXS=1 genparser
 make USE_PGXS=1
 make USE_PGXS=1 install
 ```

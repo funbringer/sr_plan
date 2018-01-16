@@ -1,7 +1,9 @@
 # contrib/sr_plan/Makefile
 
 MODULE_big = sr_plan
-OBJS = sr_plan.o serialize.o deserialize.o $(WIN32RES)
+PARSER_SRC = serialize.c deserialize.c
+OBJS = sr_plan.o $(PARSER_SRC:.c=.o) $(WIN32RES)
+PG_CPPFLAGS = -Wno-misleading-indentation  # code is ugly
 
 EXTENSION = sr_plan
 DATA = sr_plan--1.0.sql sr_plan--unpackaged--1.0.sql
@@ -21,6 +23,14 @@ include $(top_srcdir)/contrib/contrib-global.mk
 endif
 
 
-genparser:
-#	test -d sr_plan_env ||  
-	python gen_parser.py nodes.h `$(PG_CONFIG) --includedir-server`
+# additional clean step
+clean: rm_parser
+
+# generate C files for parser
+%.c: %.mako
+	python gen_parser.py nodes.h `$(PG_CONFIG) --includedir-server` $@
+
+rm_parser:
+	rm -f $(PARSER_SRC)
+
+.PHONY: rm_parser

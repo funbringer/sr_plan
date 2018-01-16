@@ -24,7 +24,7 @@ static void *(*hook) (void *);
 	numeric_types += enum_likes_types
 
 	node_types = node_tags_refs + node_tags_structs
-	
+
 	def camel_split(s):
 		return (''.join(map(lambda x: x if x.islower() else " "+x, s))).split()
 %>
@@ -40,13 +40,13 @@ static void *(*hook) (void *);
 	%if elog:
 		elog(WARNING, "Start deserailize node ${var_name}");
 	%endif
-	if (var_value->type == jbvNull) 
+	if (var_value->type == jbvNull)
 	{
 		local_node->${var_name} = NULL;
 	} else {
 		local_node->${var_name} = (${type_node["name"]} *) jsonb_to_node(var_value->val.binary.data);
 	}
-	
+
 </%def>
 
 
@@ -66,7 +66,7 @@ list_deser(JsonbContainer *container, bool oid)
 	JsonbIterator *it;
 	List *l = NIL;
 	it = JsonbIteratorInit(container);
-	
+
 	while ((type = JsonbIteratorNext(&it, &v, true)) != WJB_DONE)
 	{
 		if (type == WJB_ELEM)
@@ -192,7 +192,7 @@ list_deser(JsonbContainer *container, bool oid)
 		}
 		local_node->${var_name} = result;
 	}
-	
+
 </%def>
 
 %for struct_name, struct in node_tree.items():
@@ -248,7 +248,6 @@ datum_deser(JsonbValue *var_value, bool typbyval)
 			}
 		}
 		res = PointerGetDatum(s);
-		
 	}
 
 	return res;
@@ -333,11 +332,11 @@ datum_deser(JsonbValue *var_value, bool typbyval)
 					{
 						JsonbValue *typbyval_value;
 						${make_key("typbyval_key", "constbyval")}
-						
+
 						typbyval_value = findJsonbValueFromContainer(container,
 											JB_FOBJECT,
 											&typbyval_key);
-						
+
 						local_node->${var_name} = datum_deser(var_value, typbyval_value->val.boolean);
 					}
 				%else:
@@ -360,7 +359,7 @@ void *jsonb_to_node(JsonbContainer *container)
 {
 	JsonbValue *node_type;
 	int16 node_type_value;
-	
+
 	${make_key("node_type_key", "type")}
 
 	if (container == NULL)

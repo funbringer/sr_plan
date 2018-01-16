@@ -1,5 +1,6 @@
 from __future__ import print_function
 import sys
+import os
 
 from pycparser import c_ast, parse_file
 from mako.template import Template
@@ -71,7 +72,6 @@ class StructVisitor(c_ast.NodeVisitor, StructMixin):
 	def visit_Struct(self, node):
 		if "/nodes/" not in node.coord.file:
 			return
-		#print(str(node.name)+" "+str(type(node)))
 
 		struct_node = dict()
 
@@ -98,13 +98,14 @@ class StructVisitor(c_ast.NodeVisitor, StructMixin):
 		self.structs_dict[str(node.name)] = struct_node
 
 if __name__ == "__main__":
-	filename = sys.argv[1]
-	postgres_include = r""
-	if len(sys.argv) == 3:
-		postgres_include = r"-I" + sys.argv[2]
+	assert(len(sys.argv) >= 4)
+
+	nodes_file = sys.argv[1]
+	postgres_include = r"-I" + sys.argv[2]
+	output_file = sys.argv[3]
 
 	ast = parse_file(
-		filename,
+		nodes_file,
 		use_cpp=True,
 		cpp_path='cpp',
 		cpp_args=[r"-I./fake_libc_include", postgres_include]
@@ -117,24 +118,17 @@ if __name__ == "__main__":
 	struct_visitor_2 = StructExVisitor(struct_visitor.node_tags_structs)
 	struct_visitor_2.visit(ast)
 
-	deserialize_tmpl = Template(filename='./deserialize.mako')
-	serialize_tmpl = Template(filename='./serialize.mako')
-	out_file = open("./deserialize.c", "w")
-	out_file.write(deserialize_tmpl.render(
-		node_tree=struct_visitor.structs_dict,
-		enums_list=typedef_visitor.enums_list,
-		node_tags_refs=struct_visitor_2.nodes_structs,
-		node_tags_structs=struct_visitor.node_tags_structs,
-		node_tag_enums=typedef_visitor.node_tag_enums
-	))
-	out_file.close()
-	out_file = open("./serialize.c", "w")
-	out_file.write(serialize_tmpl.render(
-		node_tree=struct_visitor.structs_dict,
-		enums_list=typedef_visitor.enums_list,
-		node_tags_refs=struct_visitor_2.nodes_structs,
-		node_tags_structs=struct_visitor.node_tags_structs,
-		node_tag_enums=typedef_visitor.node_tag_enums
-	))
-	out_file.close()
-	#ast.show()
+	assert(output_file.endswith(".c"))
+
+	template_file = os.path.splitext(output_file)[0] + '.mako'
+	template = Template(filename=template_file)
+
+	with open(output_file, "w") as f:
+		f.write(template.render(
+			node_tree=struct_visitor.structs_dict,
+			enums_list=typedef_visitor.enums_list,
+			node_tags_refs=struct_visitor_2.nodes_structs,
+			node_tags_structs=struct_visitor.node_tags_structs,
+			node_tag_enums=typedef_visitor.node_tag_enums
+		))
+
