@@ -2,11 +2,11 @@
 
 ## Rationale
 
-sr_plan looks like Oracle Outline system. It can be used to lock the execution plan. It is necessary if you do not trust the planner or able to form a better plan.
+sr_plan is similar to Oracle Outline system: it can be used to lock the execution plan for a tricky query. It is necessary if you do not trust the planner or able to form a better plan.
 
 ## Build
 
-Dependencies: >= python 3.2, mako, pycparser.
+Dependencies: python 2.7 or 3.2+, mako, pycparser.
 
 You might want to use virtual environment:
 ```bash
@@ -20,7 +20,7 @@ After that, compile and install sr_plan:
 make USE_PGXS=1 install
 ```
 
-And modify your postgres config:
+Finally, add the following line to your `postgresql.conf`:
 ```
 shared_preload_libraries = 'sr_plan.so'
 ```
