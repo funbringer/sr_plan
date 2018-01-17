@@ -120,7 +120,7 @@ if __name__ == "__main__":
 
 	assert(output_file.endswith(".c"))
 
-	template_file = os.path.splitext(output_file)[0] + '.mako'
+	template_file = os.path.splitext(output_file)[0] + ".mako"
 	template = Template(filename=template_file)
 
 	with open(output_file, "w") as f:
