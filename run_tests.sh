@@ -61,6 +61,7 @@ if test -f regression.diffs; then cat regression.diffs; fi
 if [ $status -ne 0 ]; then exit 1; fi
 
 # generate *.gcov files
+rm -f *serialize.{gcda,gcno}
 gcov *.c *.h
 
 

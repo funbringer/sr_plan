@@ -26,7 +26,7 @@ endif
 
 
 # additional clean step
-clean: rm_parser
+clean: rm_parser rm_coverage
 
 # generate C files for parser
 %.c: %.mako
@@ -35,4 +35,7 @@ clean: rm_parser
 rm_parser:
 	rm -f $(PARSER_SRC)
 
-.PHONY: rm_parser
+rm_coverage:
+	rm -f *.gcda *.gcno *.gcov
+
+.PHONY: rm_parser rm_coverage

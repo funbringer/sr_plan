@@ -7,3 +7,5 @@ venv/
 results/
 regression.*
 Dockerfile
+*.gcda
+*.gcno
