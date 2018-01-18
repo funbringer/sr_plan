@@ -6,6 +6,8 @@ sr_plan is similar to Oracle Outline system: it can be used to lock the executio
 
 ## Build
 
+Supported versions of PostgreSQL: 9.5, 9.6, 10.
+
 Dependencies: python 2.7 or 3.2+, mako, pycparser.
 
 You might want to use virtual environment:
@@ -22,7 +24,7 @@ make USE_PGXS=1 install
 
 Finally, add the following line to your `postgresql.conf`:
 ```
-shared_preload_libraries = 'sr_plan.so'
+shared_preload_libraries = 'sr_plan'
 ```
 
 ## Usage
