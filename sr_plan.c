@@ -163,8 +163,8 @@ PlannedStmt *sr_planner(Query *parse,
 	schema_oid = get_sr_plan_schema();
 	if(!OidIsValid(schema_oid))
 	{
-		/* Just call standard_planner() if schema doesn't exist. */
-		return standard_planner(parse, cursorOptions, boundParams);
+		/* Just call next planner if schema doesn't exist. */
+		return call_next_planner(parse, cursorOptions, boundParams);
 	}
 
 	if(sr_plan_fake_func)
