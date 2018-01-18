@@ -2,7 +2,9 @@
 
 # Copyright (c) 2018, Postgres Professional
 
-set -eux
+
+set -ux
+
 
 status=0
 
@@ -25,7 +27,10 @@ source $VENV_PATH/bin/activate
 $PIP install -r ./requirements.txt
 
 # perform static analyzis
-scan-build make USE_PGXS=1
+scan-build --status-bugs make USE_PGXS=1 || status=$?
+
+# something's wrong, exit now!
+if [ $status -ne 0 ]; then exit 1; fi
 
 # don't forget to "make clean"
 make USE_PGXS=1 clean
@@ -40,11 +45,10 @@ make USE_PGXS=1 install
 # add sr_plan to shared_preload_libraries and restart cluster 'test'
 echo "shared_preload_libraries = 'pg_stat_statements, sr_plan'" >> $PGDATA/postgresql.conf
 echo "port = 55435" >> $PGDATA/postgresql.conf
-pg_ctl start -l /tmp/postgres.log -w
+pg_ctl start -l /tmp/postgres.log -w || status=$?
 
-# check startup
-status=$?
-if [ $status -ne 0 ]; then cat /tmp/postgres.log; fi
+# something's wrong, exit now!
+if [ $status -ne 0 ]; then cat /tmp/postgres.log; exit 1; fi
 
 # run regression tests
 export PG_REGRESS_DIFF_OPTS="-w -U3" # for alpine's diff (BusyBox)
@@ -53,12 +57,15 @@ PGPORT=55435 make USE_PGXS=1 installcheck || status=$?
 # show diff if it exists
 if test -f regression.diffs; then cat regression.diffs; fi
 
+# something's wrong, exit now!
+if [ $status -ne 0 ]; then exit 1; fi
+
 # generate *.gcov files
 gcov *.c *.h
 
 
-# attempt to fix codecov
-set +eux
+set +ux
+
 
 # send coverage stats to Codecov
 bash <(curl -s https://codecov.io/bash)
