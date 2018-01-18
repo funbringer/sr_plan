@@ -38,7 +38,7 @@ make USE_PGXS=1 PG_CPPFLAGS="-coverage" SHLIB_LINK="-coverage"
 make USE_PGXS=1 install
 
 # add sr_plan to shared_preload_libraries and restart cluster 'test'
-echo "shared_preload_libraries = 'sr_plan'" >> $PGDATA/postgresql.conf
+echo "shared_preload_libraries = 'pg_stat_statements, sr_plan'" >> $PGDATA/postgresql.conf
 echo "port = 55435" >> $PGDATA/postgresql.conf
 pg_ctl start -l /tmp/postgres.log -w
 

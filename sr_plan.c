@@ -15,7 +15,6 @@
 PG_MODULE_MAGIC;
 
 void	_PG_init(void);
-void	_PG_fini(void);
 
 static bool sr_plan_write_mode = false;
 
@@ -409,11 +408,6 @@ void _PG_init(void) {
 
 	planner_hook = &sr_planner;
 	post_parse_analyze_hook = &sr_analyze;
-}
-
-void _PG_fini(void) {
-	planner_hook = NULL;
-	post_parse_analyze_hook = NULL;
 }
 
 PG_FUNCTION_INFO_V1(_p);
