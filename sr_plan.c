@@ -64,7 +64,7 @@ void sr_analyze(ParseState *pstate, Query *query)
 	query_text = pstate->p_sourcetext;
 
 	if (post_parse_analyze_hook_next)
-		post_parse_analyze_hook(pstate, query);
+		post_parse_analyze_hook_next(pstate, query);
 }
 
 /*
