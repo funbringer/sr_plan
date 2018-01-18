@@ -1,7 +1,7 @@
 FROM postgres:${PG_VERSION}-alpine
 
 # Install dependencies
-RUN apk add --no-cache clang-analyzer make musl-dev gcc python3 py-virtualenv curl;
+RUN apk add --no-cache clang-analyzer clang perl make musl-dev gcc python3 py-virtualenv curl;
 
 # Environment
 ENV LANG=C.UTF-8 PGDATA=/pg/data
