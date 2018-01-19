@@ -6,8 +6,11 @@ OBJS = sr_plan.o $(PARSER_SRC:.c=.o) $(WIN32RES)
 PG_CPPFLAGS = -Wno-misleading-indentation  # code is ugly
 
 EXTENSION = sr_plan
-DATA = sr_plan--1.0.sql sr_plan--unpackaged--1.0.sql
-PGFILEDESC = "sr_plan - save and read plan"
+EXTVERSION = 1.1
+PGFILEDESC = "sr_plan - save and reuse plans for tricky queries"
+
+DATA_built = sr_plan--$(EXTVERSION).sql
+DATA = sr_plan--1.0--1.1.sql
 
 REGRESS = sr_plan
 
@@ -27,6 +30,9 @@ endif
 
 # additional clean step
 clean: rm_parser rm_coverage
+
+sr_plan--$(EXTVERSION).sql: $(DATA)
+	cat sr_plan--1.0.sql sr_plan--1.0--1.1.sql > $@
 
 # generate C files for parser
 %.c: %.mako
