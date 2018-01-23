@@ -59,19 +59,23 @@ select query_hash, enable, valid, query, explain_jsonb_plan(plan) from sr_plans;
 
 ```
 
-explain_jsonb_plan function allows you to display explain execute the plan of which lies in jsonb. By default, all the plans are off, you need enable it:
+`explain_jsonb_plan` function shows you a pretty EXPLAINish output. By default, recorded plans are disabled, so you have to enable them:
+
 ```SQL
+/* why not 1783086253? */
 update sr_plans set enable=true where query_hash=1783086253;
 ```
-(1783086253 for example only)
-After that, the plan for the query will be taken from the sr_plans.
 
-In addition sr plan allows you to save a parameterized query plan. In this case, we have some constants in the query are not essential.
-For the parameters we use a special function _p (anyelement) example:
+After that, the plan for the query will be taken from the `sr_plans`.
+
+In addition sr_plan allows you to save a parameterized query plan. For parameters we use a special function `_p`:
+
 ```SQL
 select query_hash from sr_plans where query_hash=1000+_p(10);
 ```
-if we keep the plan for the query and enable it to be used also for the following queries:
+
+As a result, the following queries will use the recorded plan:
+
 ```SQL
 select query_hash from sr_plans where query_hash=1000+_p(11);
 select query_hash from sr_plans where query_hash=1000+_p(-5);
