@@ -1,5 +1,5 @@
 # sr_plan extension
-comment = 'sr_plan - save and reuse plans for tricky queries'
+comment = 'save and reuse plans for tricky queries'
 default_version = '1.1'
 module_pathname = '$libdir/sr_plan'
 relocatable = true
